@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+#
 # Reporting tool that prints out reports (in plain text) using data in
 # the database which has browsing history for articles web site.
 
