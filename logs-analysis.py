@@ -61,13 +61,13 @@ def print_days_with_errors(db_conn, error_threshold):
            " select to_char(time, 'FMMonth DD, YYYY') as log_date," +
            " sum(" +
            " case " +
-           "   when left(status, 1) in ('1', '2', '3') then 1" +
+           "   when status < '400' then 1" +
            "   else 0" +
            "   end" +
            "   ) as passed_count," +
            " sum(" +
            " case" +
-           "   when left(status, 1) in ('4', '5') then 1" +
+           "   when status >= '400' then 1" +
            "   else 0" +
            "   end) as error_count" +
            " from log" +
