@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Reporting tool that prints out reports (in plain text) using data in
 # the database which has browsing history for articles web site.
@@ -25,12 +25,13 @@ def print_articles_by_popularity(db_conn, order, num_of_articles):
     Use 'order=desc' for most popular or 'order=asc' for less popular.
     num_of_articles is number of articles to show or use 'ALL'
     to show all articles."""
-    sql = ("select articles.title, count(log.id) as num" +
-           " from log, articles" +
-           " where lower(log.path) = '/article/'||articles.slug" +
-           " group by articles.title" +
-           " order by num " + order +
-           " limit " + str(num_of_articles) + ";")
+    sql = """SELECT articles.title, count(log.id) AS num
+             FROM log, articles
+             WHERE lower(log.path) = '/article/'||articles.slug
+             GROUP BY articles.title
+             ORDER BY num {}
+             LIMIT {};"""
+    sql = sql.format(order, str(num_of_articles))
     print_sql_result(db_conn, sql, " views")
 
 
@@ -39,43 +40,45 @@ def print_authors_by_popularity(db_conn, order, num_of_authors):
     Use 'order=desc' for most popular or 'order=asc' for less popular.
     num_of_authors is number of authors to show or use 'ALL'
     to show all authors."""
-    sql = ("select authors.name, count(log.id) as num" +
-           " from log, articles, authors" +
-           " where lower(log.path) = '/article/'||articles.slug" +
-           " and articles.author = authors.id" +
-           " group by authors.name" +
-           " order by num " + order +
-           " limit " + str(num_of_authors) + ";")
+    sql = """SELECT authors.name, count(log.id) AS num
+             FROM log, articles, authors
+             WHERE lower(log.path) = '/article/'||articles.slug
+             AND articles.author = authors.id
+             GROUP BY authors.name
+             ORDER BY num {}
+             LIMIT {};"""
+    sql = sql.format(order, str(num_of_authors))
     print_sql_result(db_conn, sql, " views")
 
 
 def print_days_with_errors(db_conn, error_threshold):
     """Print the days that have percentage of requests with errors
     more than error_threshold."""
-    sql = ("select log_date," +
-           " round(" +
-           "   cast(error_count as decimal)" +
-           "   / (error_count + passed_count)" +
-           "   * 100, 1) as error_percentage" +
-           " from (" +
-           " select to_char(time, 'FMMonth DD, YYYY') as log_date," +
-           " sum(" +
-           " case " +
-           "   when status < '400' then 1" +
-           "   else 0" +
-           "   end" +
-           "   ) as passed_count," +
-           " sum(" +
-           " case" +
-           "   when status >= '400' then 1" +
-           "   else 0" +
-           "   end) as error_count" +
-           " from log" +
-           " group by log_date) as log_by_date" +
-           " where round(" +
-           "   cast(error_count as decimal)" +
-           "   / (error_count + passed_count)" +
-           "   * 100, 1) > " + str(error_threshold) + ";")
+    sql = """SELECT log_date,
+             round(
+               cast(error_count as decimal)
+               / (error_count + passed_count)
+               * 100, 1) AS error_percentage
+             FROM (
+             SELECT to_char(time, 'FMMonth DD, YYYY') AS log_date,
+             sum(
+             case
+               when status < '400' then 1
+               else 0
+               end
+               ) as passed_count,
+             sum(
+             case
+               when status >= '400' then 1
+               else 0
+               end) as error_count
+             FROM log
+             GROUP BY log_date) AS log_by_date
+             WHERE round(
+               cast(error_count as decimal)
+               / (error_count + passed_count)
+               * 100, 1) > {};"""
+    sql = sql.format(str(error_threshold))
     print_sql_result(db_conn, sql, "%")
 
 
